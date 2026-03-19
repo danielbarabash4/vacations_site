@@ -1,29 +1,25 @@
-import mysql from "mysql";
+import mysql from "mysql2/promise";
 import config from "./Config";
 
-//create a connection object to mysql server....
-const connection = mysql.createPool({
+const connection: any = mysql.createPool({
   host: config.mysql_host,
   user: config.mysql_user,
   password: config.mysql_password,
   database: config.mysql_database,
   port: config.mysql_port,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
-//create an execute command so we can send SQL statements
-const execute = (sql: string): Promise<any> => {
-  return new Promise<any>((resolve, reject) => {
-    connection.query(sql, (err, res) => {
-      //Huston, we have a problem
-      if (err) {
-        reject(err);
-        console.log("my sql error : ", err);
-        return;
-      }
-      //no error
-      resolve(res);
-    });
-  });
+const execute = async (sql: string, params: any[] = []): Promise<any> => {
+  try {
+    const [rows] = await connection.query(sql, params);
+    return rows;
+  } catch (err: any) {
+    console.log("MySQL Error: ", err);
+    throw err;
+  }
 };
 
 export default { execute };
